@@ -1,0 +1,13 @@
+{
+  "type": "postgres",
+  "host": "localhost",
+  "port": 5432,
+  "username": "postgres",
+  "password": "postgres",
+  "database": "sea",
+  "entities": ["join(__dirname, '**', '*.entity.{ts,js}`)"],
+  "cli": {
+    "migrationsDir": "src/migration"
+  },
+  "migrations": ["src/migration/*.ts"]
+}
