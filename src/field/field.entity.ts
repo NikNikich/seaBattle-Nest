@@ -6,7 +6,7 @@ import {
     JoinColumn
 } from "typeorm";
 import {UserEntity} from "../user/user.entity";
-import {GameEntity} from "../Game/game.entity";
+import {GameEntity} from "../game/game.entity";
 
 @Entity('field')
 export class FieldEntity {
@@ -19,9 +19,7 @@ export class FieldEntity {
     })
     content: string;
 
-    @Column({
-        length: 3
-    })
+    @Column()
     length:number;
 
     @ManyToOne(type => GameEntity, {eager: true, cascade: true})

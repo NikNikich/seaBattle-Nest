@@ -5,7 +5,8 @@
   "username": "postgres",
   "password": "postgres",
   "database": "sea",
-  "entities": ["join(__dirname, '**', '*.entity.{ts,js}`)"],
+  "synchronize": true,
+  "entities": ["dist/**/*.entity.js"],
   "cli": {
     "migrationsDir": "src/migration"
   },

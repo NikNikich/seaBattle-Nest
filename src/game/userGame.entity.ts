@@ -15,8 +15,7 @@ export class UserGame {
     id: number;
 
     @Column({
-        name: 'sunk_ships',
-        length: 5
+        name: 'sunk_ships'
     })
     sunkShips:number;
 

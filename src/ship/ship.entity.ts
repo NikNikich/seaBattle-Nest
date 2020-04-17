@@ -11,9 +11,7 @@ export class ShipEntity {
     })
     title: string;
 
-    @Column({
-        length: 3
-    })
+    @Column()
     length: number;
 
 }

@@ -20,9 +20,7 @@ export class FieldShipEntity {
     })
     coordinate: string;
 
-    @Column({
-        length: 1
-    })
+    @Column()
     direction: number;
 
 

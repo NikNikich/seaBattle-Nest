@@ -17,9 +17,7 @@ export class GameEntity {
     @Column()
     winner:number;
 
-    @Column({
-        length: 5
-    })
+    @Column()
     progress:number;
 
     @ManyToOne(type => UserEntity,{  eager: true, cascade:true})

@@ -1,7 +1,7 @@
 import {Entity, PrimaryGeneratedColumn, Column, BeforeInsert, JoinTable, ManyToMany, OneToMany} from "typeorm";
 import { IsEmail,   } from 'class-validator';
 import {TokenEntity} from "./token.entity";
-import {GameEntity} from "../Game/game.entity";
+import {GameEntity} from "../game/game.entity";
 
 @Entity('user')
 export class UserEntity {
@@ -32,9 +32,7 @@ export class UserEntity {
     })
     password: string;
 
-    @Column({
-        length: 11
-    })
+    @Column()
     phone: number;
 
     @OneToMany(type => TokenEntity,token=>token.user,)

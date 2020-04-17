@@ -8,9 +8,10 @@ export class TokenEntity {
     id: number;
 
     @Column({
-        length: 200
+        length: 200,
+        name: "access_token"
     })
-    firstName: string;
+    accessToken: string;
 
     @ManyToOne(type => UserEntity,{  eager: true, cascade:true})
     @JoinColumn({ name: "user_id" })
