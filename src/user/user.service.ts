@@ -12,6 +12,7 @@ export class UserService {
     constructor(
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
+        @InjectRepository(TokenEntity)
         private readonly tokenRepository: Repository<TokenEntity>
     ) {}
 
@@ -37,12 +38,12 @@ export class UserService {
     async create(dto: CreateUserDto):Promise<any>{
         const {lastName, firstName, email, password} = dto;
         console.log(`const create userne ${firstName}  email ${email} password ${password}`);
-        const qb = await getRepository(UserEntity)
+        const user = await this.userRepository.findOne({email});
+            /*await getRepository(UserEntity)
             .createQueryBuilder('user')
             .where('user.first_name = :firstName', { firstName })
-            .orWhere('user.email = :email', { email });
+            .orWhere('user.email = :email', { email });*/
         console.log(`const01 create username ${firstName}  email ${email} password ${password}`);
-        const user = await qb.getOne();
         console.log(`const02 create username ${firstName}  email ${email} password ${password}`);
         console.log(user);
         if (user) {
@@ -52,14 +53,13 @@ export class UserService {
             throw new HttpException({message: 'Input data validation failed', errors}, HttpStatus.BAD_REQUEST);
 
         }
-        console.log(`const1 create userne ${firstName}  email ${email} password ${password}`);
         // create new user
         let newUser = new UserEntity();
         newUser.lastName = lastName;
         newUser.firstName = firstName;
         newUser.email = email;
         newUser.password = password;
-
+        console.log(newUser);
         const errors = await validate(newUser);
         if (errors.length > 0) {
             console.log(`err1`);

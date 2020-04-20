@@ -32,7 +32,9 @@ export class UserEntity {
     })
     password: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     phone: number;
 
     @OneToMany(type => TokenEntity,token=>token.user,)
