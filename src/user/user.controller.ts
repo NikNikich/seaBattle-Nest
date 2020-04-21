@@ -11,7 +11,6 @@ export class UserController {
     constructor(private readonly userService: UserService) {}
     @Get()
     async findOne(@Query('email') email: string,@Query('password')password: string)/*: Promise<string[]>*/ {
-        console.log(`email ${email} pass ${password}`);
         let loginUserDto:LoginUserDto={email:email,password:password};
         return await this.userService.findOne(loginUserDto);
     }
@@ -19,16 +18,11 @@ export class UserController {
     @Post()
     @HttpCode(200)
     async create(@Body() userData: CreateUserDto) {
-
-        console.log(`emailpost ${userData.email} passpost ${userData.password}`);
         let ret=await this.userService.create(userData);
-        console.log(`return ${ret}`);
         return ret;
     }
     @Put()
     async update( @Body() userData: UpdateUserDto) {
-        console.log(`obj ${Object.keys(userData)} id ${userData.id}`);
-
         return await this.userService.update(userData);
     }
 

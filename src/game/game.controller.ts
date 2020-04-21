@@ -2,7 +2,7 @@ import {Get, Post, Put , HttpCode, Controller, Param, Query, Body} from '@nestjs
 import {GameService} from "./game.service";
 import {CreateGameDto, MoveGameDto} from "./dto";
 
-@Controller('user')
+@Controller('game')
 export class GameController {
     constructor(private readonly gameService: GameService) {}
     @Get()
@@ -11,7 +11,7 @@ export class GameController {
     }
 
     @Get("/attached")
-    async attached(@Query('email') numberGame: string,@Body("userId")userId:number) {
+    async attached(@Query('game') numberGame: number,@Body("userId")userId:number) {
         return await this.gameService.attached(numberGame, userId);
     }
 
@@ -23,7 +23,7 @@ export class GameController {
 
     @Put()
     async move( @Body() move: MoveGameDto, @Body("userId")userId:number) {
-        await this.gameService.move(move, userId);
+        return await this.gameService.move(move, userId);
     }
 
 }

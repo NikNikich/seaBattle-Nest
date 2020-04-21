@@ -14,14 +14,18 @@ export class GameEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     winner:number;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     progress:number;
 
     @ManyToOne(type => UserEntity,{  eager: true, cascade:true})
-    @JoinColumn({ name: "walking" })
+    @JoinColumn({ name: "walking", })
     walking: UserEntity;
 
     @ManyToOne(type => UserEntity,{  eager: true, cascade:true})
