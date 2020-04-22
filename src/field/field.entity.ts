@@ -19,11 +19,10 @@ export class FieldEntity {
     })
     content: string;
 
-    @Column()
+    @Column({
+        default:10
+    })
     length:number;
 
-    @ManyToOne(type => GameEntity, {eager: true, cascade: true})
-    @JoinColumn({name: "game_id"})
-    game: GameEntity;
 
 }

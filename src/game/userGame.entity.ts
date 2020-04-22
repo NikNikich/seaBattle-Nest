@@ -7,20 +7,34 @@ import {
 } from "typeorm";
 import {UserEntity} from "../user/user.entity";
 import {FieldEntity} from "../field/field.entity";
+import {GameEntity} from "./game.entity";
 
 @Entity('user_game')
-export class UserGame {
+export class UserGameEntity {
 
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column({
-        name: 'sunk_ships'
+        name: 'sunk_ships',
+        default:0
     })
     sunkShips:number;
 
     @Column()
     progress:number;
+
+    @Column({
+        name:"game_field",
+        nullable: true
+    })
+    gameFieldId:number;
+
+    @Column({
+        name:"his_field",
+        nullable: true
+    })
+    hisFieldId:number;
 
     @OneToOne(type => FieldEntity,{  eager: true, cascade:true})
     @JoinColumn({ name: "game_field" })
@@ -33,5 +47,9 @@ export class UserGame {
     @ManyToOne(type => UserEntity,{  eager: true, cascade:true})
     @JoinColumn({ name: "user_id" })
     user: UserEntity;
+
+    @ManyToOne(type => GameEntity, {eager: true, cascade: true})
+    @JoinColumn({name: "game_id"})
+    game: GameEntity;
 
 }

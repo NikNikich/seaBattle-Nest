@@ -1,6 +1,6 @@
 import {Get, Post, Put , HttpCode, Controller, Param, Query, Body} from '@nestjs/common';
 import {GameService} from "./game.service";
-import {CreateGameDto, MoveGameDto} from "./dto";
+import {ArrangementGameDto, AttachedGameDto, CreateGameDto, MoveGameDto} from "./dto";
 
 @Controller('game')
 export class GameController {
@@ -8,6 +8,11 @@ export class GameController {
     @Get()
     async find(@Body("userId")userId:number) {
         return await this.gameService.findAll(userId);
+    }
+
+    @Get("/start")
+    async start(@Query('game') gameId: number) {
+        return await this.gameService.start(gameId);
     }
 
     @Get("/attached")
@@ -21,9 +26,13 @@ export class GameController {
         return await this.gameService.create(gameData, userId);
     }
 
-    @Put()
+    @Put("/move")
     async move( @Body() move: MoveGameDto, @Body("userId")userId:number) {
         return await this.gameService.move(move, userId);
     }
 
+    @Put("/arrangement")
+    async arrangement( @Body() gameArrangement: ArrangementGameDto, @Body("userId")userId:number) {
+        return await this.gameService.arrangement(gameArrangement, userId);
+    }
 }

@@ -7,6 +7,7 @@ import {
 } from "typeorm";
 import {UserEntity} from "../user/user.entity";
 import {FieldEntity} from "../field/field.entity";
+import {UserGameEntity} from "./userGame.entity";
 
 @Entity('game')
 export class GameEntity {
@@ -20,9 +21,28 @@ export class GameEntity {
     winner:number;
 
     @Column({
+        default:0,
         nullable: true
     })
     progress:number;
+
+    @Column({
+        name:"user2_id",
+        nullable: true
+    })
+    user2Id:number;
+
+    @Column({
+        name:"walking",
+        nullable: true
+    })
+    walkingId:number;
+
+    @Column({
+        default:false,
+        nullable: true
+    })
+   start:boolean;
 
     @ManyToOne(type => UserEntity,{  eager: true, cascade:true})
     @JoinColumn({ name: "walking", })
@@ -36,7 +56,7 @@ export class GameEntity {
     @JoinColumn({ name: "user2_id" })
     user2: UserEntity;
 
-    @OneToMany(type => FieldEntity,field=>field.game,)
-    field: FieldEntity[];
+    @OneToMany(type => UserGameEntity,userGame=>userGame.game,)
+    userGame: FieldEntity[];
 
 }
