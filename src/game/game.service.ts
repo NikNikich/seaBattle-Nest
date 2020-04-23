@@ -25,10 +25,11 @@ export class GameService {
         @InjectRepository(FieldShipEntity)
         private readonly fieldShipRepository: Repository<FieldShipEntity>,
         @InjectRepository(UserGameEntity)
-        private readonly userGameRepository: Repository<UserGameEntity>
+        private readonly userGameRepository: Repository<UserGameEntity>,
+        private readonly longField :10,
+        private readonly compUserId :4,
     ) {
     }
-
     async findAll(userId: number) {
         const find = await this.gameRepository.find({
             "where": {
@@ -60,15 +61,15 @@ export class GameService {
         const user1 = await this.userRepository.findOne(userId);
         let user2 = null;
         if (gameData.user) {
-            user2 = await this.userRepository.findOne(4);
+            user2 = await this.userRepository.findOne(this.compUserId);
         }
         const game = await this.gameRepository.save({user1: user1, user2: user2});
-        const gameField = await this.fieldRepository.save({content:"", length: 10});
-        const hisField = await this.fieldRepository.save({content:"", length: 10});
+        const gameField = await this.fieldRepository.save({content:"", length: this.longField});
+        const hisField = await this.fieldRepository.save({content:"", length: this.longField});
         await this.userGameRepository.save({gameField, hisField, user:user1, game});
         if (user2) {
-            const gameField = await this.fieldRepository.save({content:"", length: 10});
-            const hisField = await this.fieldRepository.save({content:"", length: 10});
+            const gameField = await this.fieldRepository.save({content:"", length: this.longField});
+            const hisField = await this.fieldRepository.save({content:"", length: this.longField});
             await this.userGameRepository.save({gameField, hisField, user:user2, game});
         }
         return  game;
@@ -90,20 +91,37 @@ export class GameService {
         const gameField = await this.fieldRepository.findOne(gameUser[0].gameField);
         const hisField = await this.fieldRepository.findOne(gameUser[0].hisField);
         let fieldNull = '';
-        for (let i = 0; i < 10*10; i++) {
+        for (let i = 0; i < this.longField*this.longField; i++) {
             fieldNull+='0';
         }
         const shipsArr=ships.split(',').map(function(ship) {
             return ship.split('-');
         });
         let fieldShips = fieldNull;
+        let numberShips=[0,0,0,0]
         shipsArr.forEach((ship)=>{
-            const typeShip =ship[0];
+            const typeShip =+ship[0];
             const coordinatesShip =ship[1].split(':');
-        })
+            numberShips[(typeShip-1)]+=1
+            for (let i = 0; i < this.longField*this.longField; i++) {
+                const coordinate=this.longField*(+coordinatesShip[0]+i*+coordinatesShip[2])+coordinatesShip[1]+i*(+coordinatesShip[3]);
+                fieldShips[coordinate]=typeShip;
+            }
+        });
+        const updatedGame = Object.assign(gameField, {content: fieldNull});
+        await this.fieldRepository.save(updatedGame);
+        const updatedHis = Object.assign(hisField, {content: fieldShips});
+        await this.fieldRepository.save(updatedHis);
+        if (game.user2.id==this.compUserId){
+            await this.computerMoveShips(numberShips);
+        }
     }
 
     async move(move: MoveGameDto, userId: number) {
         return "move";
+    }
+
+    private async computerMoveShips(numberShips:number[]){
+
     }
 }

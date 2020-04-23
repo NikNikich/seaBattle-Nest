@@ -1,6 +1,7 @@
-import {Get, Post, Put , HttpCode, Controller, Param, Query, Body} from '@nestjs/common';
+import {Get, Post, Put, HttpCode, Controller, Param, Query, Body, HttpStatus} from '@nestjs/common';
 import {GameService} from "./game.service";
 import {ArrangementGameDto, AttachedGameDto, CreateGameDto, MoveGameDto} from "./dto";
+import {HttpException} from "@nestjs/common/exceptions/http.exception";
 
 @Controller('game')
 export class GameController {
@@ -33,6 +34,10 @@ export class GameController {
 
     @Put("/arrangement")
     async arrangement( @Body() gameArrangement: ArrangementGameDto, @Body("userId")userId:number) {
+        let regexp = /\d-\d\d:\d\d:\d:\d/;
+       if (gameArrangement.ships.search(regexp)<0){
+           throw new HttpException('Not ships.', HttpStatus.CONFLICT);
+       }
         return await this.gameService.arrangement(gameArrangement, userId);
     }
 }
