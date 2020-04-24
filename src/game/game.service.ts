@@ -103,7 +103,7 @@ export class GameService {
             const typeShip =+ship[0];
             const coordinatesShip =ship[1].split(':');
             numberShips[(typeShip-1)]+=1
-            for (let i = 0; i < this.longField*this.longField; i++) {
+            for (let i = 0; i < typeShip; i++) {
                 const coordinate=this.longField*(+coordinatesShip[0]+i*+coordinatesShip[2])+coordinatesShip[1]+i*(+coordinatesShip[3]);
                 fieldShips[coordinate]=typeShip;
             }
@@ -113,15 +113,131 @@ export class GameService {
         const updatedHis = Object.assign(hisField, {content: fieldShips});
         await this.fieldRepository.save(updatedHis);
         if (game.user2.id==this.compUserId){
-            await this.computerMoveShips(numberShips);
+            const userComp = await this.userRepository.findOne(userId);
+            const gameUserComp = await this.userGameRepository.find({
+                "where": {
+                    user:userComp,
+                    game,
+                }
+            });
+            const gameFieldComp = await this.fieldRepository.findOne(gameUserComp[0].gameField);
+            const hisFieldComp = await this.fieldRepository.findOne(gameUserComp[0].hisField);
+            const fieldShipsComp=await this.computerMoveShips(fieldNull,numberShips);
+            const updatedGame = Object.assign(gameFieldComp, {content: fieldNull});
+            await this.fieldRepository.save(updatedGame);
+            const updatedHis = Object.assign(hisFieldComp, {content: fieldShipsComp});
+            await this.fieldRepository.save(updatedHis);
         }
     }
+
 
     async move(move: MoveGameDto, userId: number) {
         return "move";
     }
 
-    private async computerMoveShips(numberShips:number[]){
-
+    private async computerMoveShips(fieldNull:string,numberShips:number[]):Promise<string>{
+        let fieldShips=[];
+        for (let i = 0; i < this.longField; i++) {
+            for (let j = 0; j < this.longField; j++) {
+                fieldShips[i][j]=0;
+            }
+        }
+        let ships=[];
+        numberShips.forEach((numberShips, numberTypeShip)=>{
+            const typeShip=numberTypeShip+1;
+            for (let i = 0; i < numberShips; i++) {
+                let flagWrite=false;
+                while(flagWrite){
+                    const beginCoordinates= this.getRandomCoordinates();
+                    let fieldCoordinates=[];
+                    let flagGoodCoordinates=true;
+                    for (let j = 0; j < typeShip; j++) {
+                        const XCoordinate=beginCoordinates[0]+j*beginCoordinates[3];
+                        const YCoordinate=beginCoordinates[1]+j*beginCoordinates[4];
+                        if(!((XCoordinate<this.longField)&&(YCoordinate<this.longField))){
+                            flagGoodCoordinates=false;
+                            continue;
+                        } else {
+                            if(fieldShips[XCoordinate][YCoordinate]>0){
+                                flagGoodCoordinates=false;
+                            }
+                        }
+                        let directX=[1];
+                        let directY=[1];
+                        if(j==0){
+                          directX.push(-1)  ;
+                          directY.push(-1)  ;
+                        } else if(beginCoordinates[3]>0){
+                            directY.push(-1)  ;
+                        } else if(beginCoordinates[3]>0){
+                            directX.push(-1)  ;
+                        }
+                        directX.forEach((direct)=>{
+                            if(!(((XCoordinate+direct)>=this.longField)||((XCoordinate+direct)<0)||
+                                (fieldShips[XCoordinate+direct][YCoordinate]==0))){
+                                flagGoodCoordinates=false;
+                            }
+                        });
+                        directY.forEach((direct)=>{
+                            if(!(((YCoordinate+direct)>=this.longField)||((YCoordinate+direct)<0)||
+                                (fieldShips[XCoordinate][YCoordinate+direct]==0))){
+                                flagGoodCoordinates=false;
+                            }
+                        })
+                        if(flagGoodCoordinates){
+                            fieldCoordinates.push([XCoordinate,YCoordinate]);
+                        }
+                    }
+                    if (flagGoodCoordinates){
+                        ships.push([typeShip,fieldCoordinates]);
+                        fieldShips=this.pushShipInField(typeShip,fieldShips,fieldCoordinates)
+                        flagWrite=true;
+                    }
+                }
+            }
+        });
+        let fieldCompReturn=fieldNull;
+        ships.forEach((ship)=>{
+            ship[1].forEach((coordinate)=>{
+                // @ts-ignore
+                fieldCompReturn[(this.longField*coordinate[0]+coordinate[1])]=ship[0];
+            });
+        });
+        return fieldCompReturn;
     }
+
+    pushShipInField(typeShip:number,fieldBattle:number[],shipCoordinates:number[]):number[] {
+        const directs=[1,-1];
+        let returnField=fieldBattle;
+        shipCoordinates.forEach((coordinate)=>{
+            const XCoordinateShip=coordinate[0];
+            const YCoordinateShip=coordinate[1];
+            returnField[XCoordinateShip][YCoordinateShip]=typeShip;
+            directs.forEach((direct)=>{
+                if(((XCoordinateShip+direct)>=0)&&((XCoordinateShip+direct)<this.longField)){
+                    returnField[XCoordinateShip+direct][YCoordinateShip]=9;
+                }
+                if(((YCoordinateShip+direct)>=0)&&((YCoordinateShip+direct)<this.longField)){
+                    returnField[XCoordinateShip][YCoordinateShip+direct]=9;
+                }
+            });
+        })
+        return returnField;
+    }
+
+    private  getRandomCoordinates(): number[] {
+        let coordinate=[];
+        coordinate[0]= Math.floor(  Math.random() * (this.longField + 1));
+        coordinate[1]= Math.floor(  Math.random() * (this.longField + 1));
+        let direction= Math.floor(  Math.random() * (2));
+        if(direction ==1){
+            coordinate[2]=0;
+            coordinate[3]=1;
+        } else {
+            coordinate[2]=1;
+            coordinate[3]=0;
+        }
+        return coordinate;
+    }
+
 }
