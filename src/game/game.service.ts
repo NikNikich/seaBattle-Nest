@@ -26,10 +26,10 @@ export class GameService {
         private readonly fieldShipRepository: Repository<FieldShipEntity>,
         @InjectRepository(UserGameEntity)
         private readonly userGameRepository: Repository<UserGameEntity>,
-        private readonly longField :10,
-        private readonly compUserId :4,
     ) {
     }
+    private readonly longField :10;
+    private readonly compUserId :4;
     async findAll(userId: number) {
         const find = await this.gameRepository.find({
             "where": {
@@ -132,6 +132,31 @@ export class GameService {
 
 
     async move(move: MoveGameDto, userId: number) {
+        const {gameId, coordinates} = move;
+        const game = await this.gameRepository.findOne(gameId);
+        if (game.walking.id!=userId){
+            throw new HttpException('Not user game.', HttpStatus.CONFLICT);
+        }
+        let rivalUser:UserEntity;
+        const user = await this.userRepository.findOne(userId);
+        const gameUser = await this.userGameRepository.find({
+            "where": {
+                user,
+                game,
+            }
+        });
+        if (game.user1.id==userId){
+            rivalUser=game.user2;
+        } else rivalUser=game.user1;
+        const gameRival = await this.userGameRepository.find({
+            "where": {
+                rivalUser,
+                game,
+            }
+        });
+        const gameField = await this.fieldRepository.findOne(gameUser[0].gameField);
+        const rivalField = await this.fieldRepository.findOne(gameRival[0].hisField);
+        const coordinatesMove =coordinates.split(':');
         return "move";
     }
 

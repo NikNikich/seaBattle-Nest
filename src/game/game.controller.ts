@@ -29,6 +29,10 @@ export class GameController {
 
     @Put("/move")
     async move( @Body() move: MoveGameDto, @Body("userId")userId:number) {
+        let regexp = /\d\d:\d\d/;
+        if (move.coordinates.search(regexp)<0){
+            throw new HttpException('Not ships.', HttpStatus.CONFLICT);
+        }
         return await this.gameService.move(move, userId);
     }
 
