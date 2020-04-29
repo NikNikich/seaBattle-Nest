@@ -28,8 +28,12 @@ export class GameService {
         private readonly userGameRepository: Repository<UserGameEntity>,
     ) {
     }
-    private readonly longField :10;
-    private readonly compUserId :4;
+    private readonly longField = 10;
+    private readonly compUserId = 4;
+    private readonly bangShip =8;
+    private readonly shutPast =9;
+
+
     async findAll(userId: number) {
         const find = await this.gameRepository.find({
             "where": {
@@ -43,6 +47,15 @@ export class GameService {
     async start(gameId: number) {
         const game = await this.gameRepository.findOne(gameId);
         return game.start;
+    }
+
+    async myMove(gameId: number, userId) {
+        const game = await this.gameRepository.findOne(gameId);
+        if (game.walking.id==userId){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     async attached(numberGame: number, userId: number) {
@@ -127,9 +140,36 @@ export class GameService {
             await this.fieldRepository.save(updatedGame);
             const updatedHis = Object.assign(hisFieldComp, {content: fieldShipsComp});
             await this.fieldRepository.save(updatedHis);
+            game.walking=game.user1;
+            await this.gameRepository.save(game);
+            return game;
+        } else {
+            let rivalUser:UserEntity;
+            if (game.user1.id == userId) {
+                rivalUser = game.user2;
+            } else rivalUser = game.user1;
+            const rivalField = await this.getRivalField(rivalUser,game);
+            if (rivalField.content.length>2){
+                game.walking=game.user1;
+                await this.gameRepository.save(game);
+                return game;
+            } else {
+                return "holding";
+            }
+
         }
     }
 
+    private async getRivalField(user:UserEntity, game:GameEntity): Promise<FieldEntity> {
+        const gameRival = await this.userGameRepository.find({
+            "where": {
+                user,
+                game,
+            }
+        });
+       return  await this.fieldRepository.findOne(gameRival[0].hisField);
+
+    }
 
     async move(move: MoveGameDto, userId: number) {
         const {gameId, coordinates} = move;
@@ -148,16 +188,87 @@ export class GameService {
         if (game.user1.id==userId){
             rivalUser=game.user2;
         } else rivalUser=game.user1;
-        const gameRival = await this.userGameRepository.find({
-            "where": {
-                rivalUser,
-                game,
+        const gameField = await this.fieldRepository.findOne(gameUser[0].gameField);
+        const rivalField = await this.getRivalField(rivalUser,game);
+        const coordinatesMove =coordinates.split(':');
+        const stringCoordinate:number=Number(this.longField * +coordinatesMove[0] + coordinatesMove[1]);
+        if (rivalField.content[stringCoordinate]=='0'){
+            gameField.content=gameField.content.slice(0,stringCoordinate)+this.shutPast+gameField.content.slice(stringCoordinate+1);
+            await this.fieldRepository.save(gameField);
+            game.walking=rivalUser;
+            await this.gameRepository.save(game);
+            return {message:"You missed. Shutting your Rival",field:gameField};
+        } else if(+rivalField.content[stringCoordinate]<this.bangShip){
+            gameField.content=await this.hitShip(rivalField.content,+coordinatesMove[0],+coordinatesMove[1]);
+            await this.fieldRepository.save(gameField);
+            if(await this.gameOver(gameField.content)){
+                game.winner=userId;
+                await this.gameRepository.save(game);
+                return {message:"You win",field:gameField};
+            } else{
+                return {message:"You hit ship. Your shot",field:gameField};
+            }
+
+        }else {
+            throw new HttpException('Not ships.', HttpStatus.CONFLICT);
+        }
+    }
+    private async gameOver(field:string): Promise<boolean> {
+        let flagOver=true;
+        for (let i = 1; i < this.bangShip; i++) {
+            if (field.indexOf(''+i)>0){
+                flagOver=false;
+            }
+        }
+        return  flagOver;
+    }
+
+    private async hitShip(field:string, coordinateX:number, coordinateY:number): Promise<string> {
+        let coordinateShip=[[coordinateX,coordinateY]];
+        let returnField=field;
+        const typeShip=field[this.longField*coordinateX+coordinateY];
+        let directions=[-1,1];
+        directions.forEach((direct)=>{
+            let flagDirect=true;
+            let step=1;
+            while(flagDirect){
+                if((coordinateX-direct*step>-1)&&(coordinateX-direct*step<this.longField)&&
+                field[this.longField*(coordinateX-direct*step)+coordinateY]==typeShip){
+                    step++;
+                    coordinateShip.push([coordinateX-direct*step,coordinateY]);
+                } else {
+                    flagDirect=false;
+                }
+            }
+            flagDirect=true;
+            step=1;
+            while(flagDirect){
+                if((coordinateY-direct*step>-1)&&(coordinateY-direct*step<this.longField)&&
+                    field[this.longField*coordinateX+coordinateY-direct*step]==typeShip){
+                    step++;
+                    coordinateShip.push([coordinateX,coordinateY-direct*step]);
+                } else {
+                    flagDirect=false;
+                }
             }
         });
-        const gameField = await this.fieldRepository.findOne(gameUser[0].gameField);
-        const rivalField = await this.fieldRepository.findOne(gameRival[0].hisField);
-        const coordinatesMove =coordinates.split(':');
-        return "move";
+        coordinateShip.forEach((coordinate)=>{
+            let key:number=this.longField*+coordinate[0]+coordinate[1];
+            returnField=returnField.slice(0,key)+this.bangShip+returnField.slice(key+1);
+            directions.forEach((direct)=>{
+                if((coordinate[0]-direct>-1)&&(coordinate[0]-direct<this.longField)&&
+                    field[this.longField*(coordinate[0]-direct)+coordinate[1]]=='0'){
+                    let keyBum:number=this.longField*(coordinate[0]-direct)+coordinate[1];
+                    returnField=returnField.slice(0,keyBum)+this.shutPast+returnField.slice(keyBum+1);
+                }
+                if((coordinate[1]-direct>-1)&&(coordinate[1]-direct<this.longField)&&
+                    field[this.longField*coordinate[0]+coordinate[1]-direct]=='0'){
+                    let keyBum:number=this.longField*coordinate[0]+coordinate[1]-direct;
+                    returnField=returnField.slice(0,keyBum)+this.shutPast+returnField.slice(keyBum+1);
+                }
+            })
+        });
+        return returnField;
     }
 
     private async computerMoveShips(fieldNull:string,numberShips:number[]):Promise<string>{
@@ -177,8 +288,8 @@ export class GameService {
                     let fieldCoordinates=[];
                     let flagGoodCoordinates=true;
                     for (let j = 0; j < typeShip; j++) {
-                        const XCoordinate=beginCoordinates[0]+j*beginCoordinates[3];
-                        const YCoordinate=beginCoordinates[1]+j*beginCoordinates[4];
+                        const XCoordinate=beginCoordinates[0]+j*beginCoordinates[2];
+                        const YCoordinate=beginCoordinates[1]+j*beginCoordinates[3];
                         if(!((XCoordinate<this.longField)&&(YCoordinate<this.longField))){
                             flagGoodCoordinates=false;
                             continue;
@@ -192,7 +303,7 @@ export class GameService {
                         if(j==0){
                           directX.push(-1)  ;
                           directY.push(-1)  ;
-                        } else if(beginCoordinates[3]>0){
+                        } else if(beginCoordinates[2]>0){
                             directY.push(-1)  ;
                         } else if(beginCoordinates[3]>0){
                             directX.push(-1)  ;
@@ -224,8 +335,8 @@ export class GameService {
         let fieldCompReturn=fieldNull;
         ships.forEach((ship)=>{
             ship[1].forEach((coordinate)=>{
-                // @ts-ignore
-                fieldCompReturn[(this.longField*coordinate[0]+coordinate[1])]=ship[0];
+                let keyBum:number=(this.longField*coordinate[0]+coordinate[1]);
+                fieldCompReturn=fieldCompReturn.slice(0,keyBum)+ship[0]+fieldCompReturn.slice(keyBum+1);
             });
         });
         return fieldCompReturn;

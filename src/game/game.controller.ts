@@ -11,6 +11,11 @@ export class GameController {
         return await this.gameService.findAll(userId);
     }
 
+    @Get("/myMove")
+    async myMove(@Query('game') gameId: number,@Body("userId")userId:number) {
+        return await this.gameService.myMove(gameId, userId);
+    }
+
     @Get("/start")
     async start(@Query('game') gameId: number) {
         return await this.gameService.start(gameId);
