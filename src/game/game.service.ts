@@ -51,7 +51,7 @@ export class GameService {
 
     async myMove(gameId: number, userId) {
         const game = await this.gameRepository.findOne(gameId);
-        if (game.walking.id==userId){
+        if ((game.walking.id!=null)&&(game.walking.id==userId)){
             return true;
         } else {
             return false;
@@ -62,7 +62,9 @@ export class GameService {
         const findGame = await this.gameRepository.findOne(numberGame);
         if (findGame.user2) {
             throw new HttpException('Game not available.', HttpStatus.CONFLICT);
-        } else {
+        } else if(findGame.user1.id==userId){
+            throw new HttpException('It is your game.', HttpStatus.CONFLICT);
+        } else{
             let addUser = await this.userRepository.findOne(userId);
             let updated = Object.assign(findGame, {user2: addUser});
             return await this.gameRepository.save(updated);
@@ -91,7 +93,7 @@ export class GameService {
     async arrangement(gameArrangement: ArrangementGameDto, userId: number) {
         const {gameId, ships} = gameArrangement;
         const game = await this.gameRepository.findOne(gameId);
-        if ((game.user1.id!=userId)||(game.user2.id!=userId)){
+        if ((game.user1.id!=userId)&&(game.user2.id!=userId)){
             throw new HttpException('Not user game.', HttpStatus.CONFLICT);
         }
         const user = await this.userRepository.findOne(userId);
@@ -117,8 +119,10 @@ export class GameService {
             const coordinatesShip =ship[1].split(':');
             numberShips[(typeShip-1)]+=1
             for (let i = 0; i < typeShip; i++) {
-                const coordinate=this.longField*(+coordinatesShip[0]+i*+coordinatesShip[2])+coordinatesShip[1]+i*(+coordinatesShip[3]);
-                fieldShips[coordinate]=typeShip;
+                const coordinateX=(+coordinatesShip[0])+i*(+coordinatesShip[2]);
+                const coordinateY=(+coordinatesShip[1])+i*(+coordinatesShip[3]);
+                const coordinate:number=this.longField*(coordinateX)+coordinateY;
+                fieldShips=fieldShips.slice(0,coordinate)+ship[0]+fieldShips.slice(coordinate+1);
             }
         });
         const updatedGame = Object.assign(gameField, {content: fieldNull});
@@ -126,7 +130,7 @@ export class GameService {
         const updatedHis = Object.assign(hisField, {content: fieldShips});
         await this.fieldRepository.save(updatedHis);
         if (game.user2.id==this.compUserId){
-            const userComp = await this.userRepository.findOne(userId);
+            const userComp = await this.userRepository.findOne(this.compUserId);
             const gameUserComp = await this.userGameRepository.find({
                 "where": {
                     user:userComp,
@@ -272,18 +276,25 @@ export class GameService {
     }
 
     private async computerMoveShips(fieldNull:string,numberShips:number[]):Promise<string>{
-        let fieldShips=[];
+        let fieldShips =[];
+        let numbersField=[];
         for (let i = 0; i < this.longField; i++) {
+            fieldShips[i]=[];
             for (let j = 0; j < this.longField; j++) {
+                numbersField.push(i*this.longField+j);
                 fieldShips[i][j]=0;
             }
         }
+        let numbersFieldJob=numbersField;
         let ships=[];
-        numberShips.forEach((numberShips, numberTypeShip)=>{
-            const typeShip=numberTypeShip+1;
-            for (let i = 0; i < numberShips; i++) {
+        //numberShips.forEach((numberShips, numberTypeShip)=>{
+        for (let numberTypeShip = numberShips.length; numberTypeShip >0; numberTypeShip--) {
+            const typeShip=numberTypeShip;
+            const numberShip=numberShips[numberTypeShip-1];
+            for (let i = 0; i < numberShip; i++) {
                 let flagWrite=false;
-                while(flagWrite){
+                let attemptCounter=0;
+                while(!flagWrite){
                     const beginCoordinates= this.getRandomCoordinates();
                     let fieldCoordinates=[];
                     let flagGoodCoordinates=true;
@@ -328,10 +339,16 @@ export class GameService {
                         ships.push([typeShip,fieldCoordinates]);
                         fieldShips=this.pushShipInField(typeShip,fieldShips,fieldCoordinates)
                         flagWrite=true;
+                    } else{
+                        if (attemptCounter>1000000){
+                            console.log("ай-яй-яй "+ attemptCounter);
+                        }
+                        attemptCounter++;
                     }
+
                 }
             }
-        });
+        }
         let fieldCompReturn=fieldNull;
         ships.forEach((ship)=>{
             ship[1].forEach((coordinate)=>{

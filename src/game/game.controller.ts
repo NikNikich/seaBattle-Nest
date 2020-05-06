@@ -13,6 +13,9 @@ export class GameController {
 
     @Get("/myMove")
     async myMove(@Query('game') gameId: number,@Body("userId")userId:number) {
+        if((gameId==undefined)||(+gameId<1)){
+            throw new HttpException('Not game id.', HttpStatus.CONFLICT);
+        }
         return await this.gameService.myMove(gameId, userId);
     }
 

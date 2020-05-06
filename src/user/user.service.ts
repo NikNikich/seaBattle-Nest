@@ -36,16 +36,13 @@ export class UserService {
     }
 
     async create(dto: CreateUserDto):Promise<any>{
-        const {lastName, firstName, email, password} = dto;
+        const {lastName, firstName, email, password, phone} = dto;
         console.log(`const create userne ${firstName}  email ${email} password ${password}`);
         const user = await this.userRepository.findOne({email});
             /*await getRepository(UserEntity)
             .createQueryBuilder('user')
             .where('user.first_name = :firstName', { firstName })
             .orWhere('user.email = :email', { email });*/
-        console.log(`const01 create username ${firstName}  email ${email} password ${password}`);
-        console.log(`const02 create username ${firstName}  email ${email} password ${password}`);
-        console.log(user);
         if (user) {
             console.log(`err0`);
             const errors = {username: 'Username and email must be unique.',
@@ -59,6 +56,7 @@ export class UserService {
         newUser.firstName = firstName;
         newUser.email = email;
         newUser.password = password;
+        newUser.phone = phone;
         console.log(newUser);
         const errors = await validate(newUser);
         if (errors.length > 0) {

@@ -21,8 +21,6 @@ export class UserGameEntity {
     })
     sunkShips:number;
 
-    @Column()
-    progress:number;
 
     @Column({
         name:"game_field",

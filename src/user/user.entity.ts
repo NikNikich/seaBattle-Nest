@@ -35,7 +35,7 @@ export class UserEntity {
     @Column({
         nullable: true
     })
-    phone: number;
+    phone: string;
 
     @OneToMany(type => TokenEntity,token=>token.user,)
     token: TokenEntity[];

@@ -10,7 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 export class UserController {
     constructor(private readonly userService: UserService) {}
     @Get()
-    async findOne(@Query('email') email: string,@Query('password')password: string)/*: Promise<string[]>*/ {
+    async findOne(@Query('email') email: string,@Query('password')password: string): Promise<any> {
         let loginUserDto:LoginUserDto={email:email,password:password};
         return await this.userService.findOne(loginUserDto);
     }
