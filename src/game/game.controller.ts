@@ -11,21 +11,29 @@ export class GameController {
         return await this.gameService.findAll(userId);
     }
 
-    @Get("/myMove")
-    async myMove(@Query('game') gameId: number,@Body("userId")userId:number) {
+    @Get("/myMove/:gameId")
+    async myMove(@Param('gameId') gameId: number,@Body("userId")userId:number) {
         if((gameId==undefined)||(+gameId<1)){
             throw new HttpException('Not game id.', HttpStatus.CONFLICT);
         }
         return await this.gameService.myMove(gameId, userId);
     }
 
-    @Get("/start")
-    async start(@Query('game') gameId: number) {
+    @Get("/compMove/:gameId")
+    async compMove(@Param('gameId') gameId: number,@Body("userId")userId:number) {
+        if((gameId==undefined)||(+gameId<1)){
+            throw new HttpException('Not game id.', HttpStatus.CONFLICT);
+        }
+        return await this.gameService.compMove(gameId, userId);
+    }
+
+    @Get("/start/:gameId")
+    async start(@Param('gameId') gameId: number) {
         return await this.gameService.start(gameId);
     }
 
-    @Get("/attached")
-    async attached(@Query('game') numberGame: number,@Body("userId")userId:number) {
+    @Get("/attached/:gameId")
+    async attached(@Param('gameId') numberGame: number,@Body("userId")userId:number) {
         return await this.gameService.attached(numberGame, userId);
     }
 
@@ -43,6 +51,7 @@ export class GameController {
         }
         return await this.gameService.move(move, userId);
     }
+
 
     @Put("/arrangement")
     async arrangement( @Body() gameArrangement: ArrangementGameDto, @Body("userId")userId:number) {

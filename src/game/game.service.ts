@@ -51,10 +51,42 @@ export class GameService {
 
     async myMove(gameId: number, userId) {
         const game = await this.gameRepository.findOne(gameId);
-        if ((game.walking.id!=null)&&(game.walking.id==userId)){
+        if ((game.walking)&&(game.walking.id==userId)){
             return true;
         } else {
             return false;
+        }
+    }
+
+    async compMove(gameId: number, userId) {
+        const game = await this.gameRepository.findOne(gameId);
+        if ((game.walking)&&(game.walking.id==this.compUserId)){
+            const userComp = await this.userRepository.findOne(this.compUserId);
+            const gameUserComp = await this.userGameRepository.find({
+                "where": {
+                    user:userComp,
+                    game,
+                }
+            });
+            const gameFieldComp = await this.fieldRepository.findOne(gameUserComp[0].gameField);
+         //   const hisFieldComp = await this.fieldRepository.findOne(gameUserComp[0].hisField);
+            const user = await this.userRepository.findOne(userId);
+            const gameUser = await this.userGameRepository.find({
+                "where": {
+                    user,
+                    game,
+                }
+            });
+         //   const gameFieldUser = await this.fieldRepository.findOne(gameUser[0].gameField);
+            const hisFieldUser= await this.fieldRepository.findOne(gameUser[0].hisField);
+            let PlaceShut=[];
+            for (let i = 0; i < hisFieldUser.content.length; i++) {
+                if(hisFieldUser.content[i]=='0'){
+                    PlaceShut.push(i);
+                }
+            }
+        } else {
+            throw new HttpException('Not computer turn.', HttpStatus.CONFLICT);
         }
     }
 
@@ -144,6 +176,7 @@ export class GameService {
             await this.fieldRepository.save(updatedGame);
             const updatedHis = Object.assign(hisFieldComp, {content: fieldShipsComp});
             await this.fieldRepository.save(updatedHis);
+            game.start=true;
             game.walking=game.user1;
             await this.gameRepository.save(game);
             return game;
@@ -155,6 +188,7 @@ export class GameService {
             const rivalField = await this.getRivalField(rivalUser,game);
             if (rivalField.content.length>2){
                 game.walking=game.user1;
+                game.start=true;
                 await this.gameRepository.save(game);
                 return game;
             } else {
@@ -195,7 +229,7 @@ export class GameService {
         const gameField = await this.fieldRepository.findOne(gameUser[0].gameField);
         const rivalField = await this.getRivalField(rivalUser,game);
         const coordinatesMove =coordinates.split(':');
-        const stringCoordinate:number=Number(this.longField * +coordinatesMove[0] + coordinatesMove[1]);
+        const stringCoordinate:number=this.longField * (+coordinatesMove[0]) + (+coordinatesMove[1]);
         if (rivalField.content[stringCoordinate]=='0'){
             gameField.content=gameField.content.slice(0,stringCoordinate)+this.shutPast+gameField.content.slice(stringCoordinate+1);
             await this.fieldRepository.save(gameField);
@@ -212,9 +246,8 @@ export class GameService {
             } else{
                 return {message:"You hit ship. Your shot",field:gameField};
             }
-
         }else {
-            throw new HttpException('Not ships.', HttpStatus.CONFLICT);
+            throw new HttpException('Bugs Shot', HttpStatus.CONFLICT);
         }
     }
     private async gameOver(field:string): Promise<boolean> {
@@ -285,69 +318,77 @@ export class GameService {
                 fieldShips[i][j]=0;
             }
         }
-        let numbersFieldJob=numbersField;
-        let ships=[];
-        //numberShips.forEach((numberShips, numberTypeShip)=>{
-        for (let numberTypeShip = numberShips.length; numberTypeShip >0; numberTypeShip--) {
-            const typeShip=numberTypeShip;
-            const numberShip=numberShips[numberTypeShip-1];
-            for (let i = 0; i < numberShip; i++) {
-                let flagWrite=false;
-                let attemptCounter=0;
-                while(!flagWrite){
-                    const beginCoordinates= this.getRandomCoordinates();
-                    let fieldCoordinates=[];
-                    let flagGoodCoordinates=true;
-                    for (let j = 0; j < typeShip; j++) {
-                        const XCoordinate=beginCoordinates[0]+j*beginCoordinates[2];
-                        const YCoordinate=beginCoordinates[1]+j*beginCoordinates[3];
-                        if(!((XCoordinate<this.longField)&&(YCoordinate<this.longField))){
-                            flagGoodCoordinates=false;
-                            continue;
+        let ships;
+        let flagEndGeneration=false;
+        newArrangement:
+        while (!flagEndGeneration) {
+            let numbersFieldJob = numbersField;
+            ships = [];
+            //numberShips.forEach((numberShips, numberTypeShip)=>{
+            for (let numberTypeShip = numberShips.length; numberTypeShip > 0; numberTypeShip--) {
+                const typeShip = numberTypeShip;
+                const numberShip = numberShips[numberTypeShip - 1];
+                for (let i = 0; i < numberShip; i++) {
+                    let flagWrite = false;
+                    while (!flagWrite) {
+                        if (numbersFieldJob.length==0){
+                            continue newArrangement;
+                        }
+                        const beginCoordinates = this.getRandomCoordinates(numbersFieldJob);
+                        const beginCoordinateKey = beginCoordinates[4];
+                        if (numbersFieldJob[beginCoordinateKey]){
+                            numbersField.slice(beginCoordinateKey,1)
                         } else {
-                            if(fieldShips[XCoordinate][YCoordinate]>0){
-                                flagGoodCoordinates=false;
+                            continue newArrangement;
+                        }
+                        let fieldCoordinates = [];
+                        let flagGoodCoordinates = true;
+                        for (let j = 0; j < typeShip; j++) {
+                            const XCoordinate = beginCoordinates[0] + j * beginCoordinates[2];
+                            const YCoordinate = beginCoordinates[1] + j * beginCoordinates[3];
+                            if (!((XCoordinate < this.longField) && (YCoordinate < this.longField))) {
+                                flagGoodCoordinates = false;
+                                continue;
+                            } else {
+                                if (fieldShips[XCoordinate][YCoordinate] > 0) {
+                                    flagGoodCoordinates = false;
+                                }
+                            }
+                            let directX = [1];
+                            let directY = [1];
+                            if (j == 0) {
+                                directX.push(-1);
+                                directY.push(-1);
+                            } else if (beginCoordinates[2] > 0) {
+                                directY.push(-1);
+                            } else if (beginCoordinates[3] > 0) {
+                                directX.push(-1);
+                            }
+                            directX.forEach((direct) => {
+                                if (!(((XCoordinate + direct) >= this.longField) || ((XCoordinate + direct) < 0) ||
+                                    (fieldShips[XCoordinate + direct][YCoordinate] == 0))) {
+                                    flagGoodCoordinates = false;
+                                }
+                            });
+                            directY.forEach((direct) => {
+                                if (!(((YCoordinate + direct) >= this.longField) || ((YCoordinate + direct) < 0) ||
+                                    (fieldShips[XCoordinate][YCoordinate + direct] == 0))) {
+                                    flagGoodCoordinates = false;
+                                }
+                            })
+                            if (flagGoodCoordinates) {
+                                fieldCoordinates.push([XCoordinate, YCoordinate]);
                             }
                         }
-                        let directX=[1];
-                        let directY=[1];
-                        if(j==0){
-                          directX.push(-1)  ;
-                          directY.push(-1)  ;
-                        } else if(beginCoordinates[2]>0){
-                            directY.push(-1)  ;
-                        } else if(beginCoordinates[3]>0){
-                            directX.push(-1)  ;
-                        }
-                        directX.forEach((direct)=>{
-                            if(!(((XCoordinate+direct)>=this.longField)||((XCoordinate+direct)<0)||
-                                (fieldShips[XCoordinate+direct][YCoordinate]==0))){
-                                flagGoodCoordinates=false;
-                            }
-                        });
-                        directY.forEach((direct)=>{
-                            if(!(((YCoordinate+direct)>=this.longField)||((YCoordinate+direct)<0)||
-                                (fieldShips[XCoordinate][YCoordinate+direct]==0))){
-                                flagGoodCoordinates=false;
-                            }
-                        })
-                        if(flagGoodCoordinates){
-                            fieldCoordinates.push([XCoordinate,YCoordinate]);
+                        if (flagGoodCoordinates) {
+                            ships.push([typeShip, fieldCoordinates]);
+                            fieldShips = this.pushShipInField(typeShip, fieldShips, fieldCoordinates)
+                            flagWrite = true;
                         }
                     }
-                    if (flagGoodCoordinates){
-                        ships.push([typeShip,fieldCoordinates]);
-                        fieldShips=this.pushShipInField(typeShip,fieldShips,fieldCoordinates)
-                        flagWrite=true;
-                    } else{
-                        if (attemptCounter>1000000){
-                            console.log("ай-яй-яй "+ attemptCounter);
-                        }
-                        attemptCounter++;
-                    }
-
                 }
             }
+            flagEndGeneration=true;
         }
         let fieldCompReturn=fieldNull;
         ships.forEach((ship)=>{
@@ -378,10 +419,11 @@ export class GameService {
         return returnField;
     }
 
-    private  getRandomCoordinates(): number[] {
+    private  getRandomCoordinates(numbersField:number[]): number[] {
         let coordinate=[];
-        coordinate[0]= Math.floor(  Math.random() * (this.longField + 1));
-        coordinate[1]= Math.floor(  Math.random() * (this.longField + 1));
+        const keyArray = Math.floor(  Math.random() * (numbersField.length));
+        coordinate[0]= Math.trunc(  numbersField[keyArray]/this.longField);
+        coordinate[1]= numbersField[keyArray]%this.longField;
         let direction= Math.floor(  Math.random() * (2));
         if(direction ==1){
             coordinate[2]=0;
@@ -390,6 +432,7 @@ export class GameService {
             coordinate[2]=1;
             coordinate[3]=0;
         }
+        coordinate[4]=keyArray;
         return coordinate;
     }
 
