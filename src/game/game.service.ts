@@ -62,14 +62,14 @@ export class GameService {
         const game = await this.gameRepository.findOne(gameId);
         if ((game.walking)&&(game.walking.id==this.compUserId)){
             const userComp = await this.userRepository.findOne(this.compUserId);
-            const gameUserComp = await this.userGameRepository.find({
+            const gameComp = await this.userGameRepository.find({
                 "where": {
                     user:userComp,
                     game,
                 }
             });
-            const gameFieldComp = await this.fieldRepository.findOne(gameUserComp[0].gameField);
-         //   const hisFieldComp = await this.fieldRepository.findOne(gameUserComp[0].hisField);
+            const gameFieldComp = await this.fieldRepository.findOne(gameComp[0].gameField);
+         //   const hisFieldComp = await this.fieldRepository.findOne(gameComp[0].hisField);
             const user = await this.userRepository.findOne(userId);
             const gameUser = await this.userGameRepository.find({
                 "where": {
@@ -79,11 +79,32 @@ export class GameService {
             });
          //   const gameFieldUser = await this.fieldRepository.findOne(gameUser[0].gameField);
             const hisFieldUser= await this.fieldRepository.findOne(gameUser[0].hisField);
-            let PlaceShut=[];
+            let placeShut=[];
             for (let i = 0; i < hisFieldUser.content.length; i++) {
                 if(hisFieldUser.content[i]=='0'){
-                    PlaceShut.push(i);
+                    placeShut.push(i);
                 }
+            }
+            const keyPlaceShut = Math.floor(  Math.random() * (placeShut.length));
+            let stringCoordinate=placeShut[keyPlaceShut];
+            if (hisFieldUser.content[stringCoordinate]=='0'){
+                gameFieldComp.content=gameFieldComp.content.slice(0,stringCoordinate)+this.shutPast+gameFieldComp.content.slice(stringCoordinate+1);
+                await this.fieldRepository.save(gameFieldComp);
+                game.walking=user;
+                await this.gameRepository.save(game);
+                return {message:"Computer missed. Yours Rival",field:gameFieldComp};
+            } else if(+hisFieldUser.content[stringCoordinate]<this.bangShip){
+                gameFieldComp.content=await this.hitShip(hisFieldUser.content,Math.trunc(  stringCoordinate/this.longField),stringCoordinate%this.longField);
+                await this.fieldRepository.save(gameFieldComp);
+                if(await this.gameOver(gameFieldComp.content,hisFieldUser.content)){
+                    game.winner=userId;
+                    await this.gameRepository.save(game);
+                    return {message:"Computer win",field:gameFieldComp};
+                } else{
+                    return {message:"Computer hit yor ship. His shot",field:gameFieldComp};
+                }
+            } else {
+                throw new HttpException('Bugs Shot', HttpStatus.CONFLICT);
             }
         } else {
             throw new HttpException('Not computer turn.', HttpStatus.CONFLICT);
@@ -171,7 +192,7 @@ export class GameService {
             });
             const gameFieldComp = await this.fieldRepository.findOne(gameUserComp[0].gameField);
             const hisFieldComp = await this.fieldRepository.findOne(gameUserComp[0].hisField);
-            const fieldShipsComp=await this.computerMoveShips(fieldNull,numberShips);
+            const fieldShipsComp = await this.computerMoveShips(fieldNull,numberShips);
             const updatedGame = Object.assign(gameFieldComp, {content: fieldNull});
             await this.fieldRepository.save(updatedGame);
             const updatedHis = Object.assign(hisFieldComp, {content: fieldShipsComp});
@@ -239,22 +260,24 @@ export class GameService {
         } else if(+rivalField.content[stringCoordinate]<this.bangShip){
             gameField.content=await this.hitShip(rivalField.content,+coordinatesMove[0],+coordinatesMove[1]);
             await this.fieldRepository.save(gameField);
-            if(await this.gameOver(gameField.content)){
+            if(await this.gameOver(gameField.content,rivalField.content)){
                 game.winner=userId;
                 await this.gameRepository.save(game);
                 return {message:"You win",field:gameField};
             } else{
                 return {message:"You hit ship. Your shot",field:gameField};
             }
-        }else {
+        } else {
             throw new HttpException('Bugs Shot', HttpStatus.CONFLICT);
         }
     }
-    private async gameOver(field:string): Promise<boolean> {
+    private async gameOver(gameField:string, shipsField): Promise<boolean> {
         let flagOver=true;
-        for (let i = 1; i < this.bangShip; i++) {
-            if (field.indexOf(''+i)>0){
-                flagOver=false;
+        for (let i = 0; i < shipsField.length; i++) {
+            if (+shipsField[i]>0){
+                if(gameField[i]=='0') {
+                    flagOver = false;
+                }
             }
         }
         return  flagOver;
