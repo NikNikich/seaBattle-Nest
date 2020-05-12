@@ -21,6 +21,11 @@ export class UserGameEntity {
     })
     sunkShips:number;
 
+    @Column({
+        name: 'difficulty',
+        default:0
+    })
+    difficulty:number;
 
     @Column({
         name:"game_field",
