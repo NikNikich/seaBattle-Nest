@@ -6,6 +6,7 @@ import { INestApplication } from '@nestjs/common';
 import {TypeOrmModule, getRepositoryToken} from "@nestjs/typeorm";
 import {ConfigModule} from "@nestjs/config";
 import {Repository, getRepository, DeleteResult } from "typeorm";
+import {TokenEntity} from "../src/user/token.entity";
 const jwt = require('jsonwebtoken');
 
 export const mockRepository = jest.fn(() => ({
@@ -65,8 +66,8 @@ describe('User', () => {
             //         synchronize: true,
             //         logging: false,
             //     }),TypeOrmModule.forFeature([UserEntity])],
-            imports: [TypeOrmModule.forRoot(),  UserModule,  ConfigModule.forRoot()],
-            providers: [{ provide: getRepositoryToken(UserEntity), useClass: mockRepository }],
+            imports: [TypeOrmModule.forFeature([TokenEntity]),TypeOrmModule.forRoot(),  UserModule,  ConfigModule.forRoot()],
+            providers: [{ provide: getRepositoryToken(TokenEntity), useClass: mockRepository }],
          //   controllers: [
          //       UserController
          //   ],
@@ -128,7 +129,6 @@ describe('User', () => {
     it(`/GET user`, () => {
         return request(app.getHttpServer())
             .get('/user')
-         //   .send({ email: '34@345.vcbc',password:'12235345346' }) // x-www-form-urlencoded upload
             .send( 'email= '+getUser.email) // x-www-form-urlencoded upload
             .send( 'password= '+getUser.password) // x-www-form-urlencoded upload
             .expect(200)
