@@ -37,7 +37,7 @@ export class UserService {
 
     async create(dto: CreateUserDto):Promise<any>{
         const {lastName, firstName, email, password, phone} = dto;
-        console.log(`const create userne ${firstName}  email ${email} password ${password}`);
+        console.log(`const create username ${firstName}  email ${email} password ${password}`);
         const user = await this.userRepository.findOne({email});
             /*await getRepository(UserEntity)
             .createQueryBuilder('user')

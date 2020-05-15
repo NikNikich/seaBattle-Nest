@@ -7,6 +7,9 @@ import {TypeOrmModule, getRepositoryToken} from "@nestjs/typeorm";
 import {ConfigModule} from "@nestjs/config";
 import {Repository, getRepository, DeleteResult } from "typeorm";
 import {TokenEntity} from "../src/user/token.entity";
+import {GameModule} from "../src/game/game.module";
+import {AppController} from "../src/app.controller";
+import {AppService} from "../src/app.service";
 const jwt = require('jsonwebtoken');
 
 export const mockRepository = jest.fn(() => ({
@@ -66,8 +69,17 @@ describe('User', () => {
             //         synchronize: true,
             //         logging: false,
             //     }),TypeOrmModule.forFeature([UserEntity])],
-            imports: [TypeOrmModule.forFeature([TokenEntity]),TypeOrmModule.forRoot(),  UserModule,  ConfigModule.forRoot()],
-            providers: [{ provide: getRepositoryToken(TokenEntity), useClass: mockRepository }],
+          /*  imports: [
+                UserModule,
+           //     GameModule,
+                TypeOrmModule.forRoot(),
+                ConfigModule.forRoot()
+            ],
+            controllers: [AppController],
+            providers: [AppService,{ provide: getRepositoryToken(UserEntity), useClass: mockRepository }],*/
+            imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),TypeOrmModule.forRoot(),  UserModule,  ConfigModule.forRoot()],
+            providers: [AppService, UserEntity],
+          //  providers: [{ provide: getRepositoryToken(UserEntity), useClass: mockRepository }],
          //   controllers: [
          //       UserController
          //   ],
