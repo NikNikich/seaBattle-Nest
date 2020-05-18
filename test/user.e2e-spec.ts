@@ -61,79 +61,12 @@ describe('User', () => {
 
     beforeAll(async () => {
         const module = await Test.createTestingModule({
-         //   imports: [TypeOrmModule.forRoot({
-            //         type: "sqlite",
-            //         database: ":memory:",
-            //         dropSchema: true,
-            //         entities: [CompanyInfo],
-            //         synchronize: true,
-            //         logging: false,
-            //     }),TypeOrmModule.forFeature([UserEntity])],
-          /*  imports: [
-                UserModule,
-           //     GameModule,
-                TypeOrmModule.forRoot(),
-                ConfigModule.forRoot()
-            ],
-            controllers: [AppController],
-            providers: [AppService,{ provide: getRepositoryToken(UserEntity), useClass: mockRepository }],*/
-            imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),TypeOrmModule.forRoot(),  UserModule,  ConfigModule.forRoot()],
-            providers: [AppService, UserEntity],
-          //  providers: [{ provide: getRepositoryToken(UserEntity), useClass: mockRepository }],
-         //   controllers: [
-         //       UserController
-         //   ],
-        //    exports: [UserService]
+            imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),TypeOrmModule.forRoot(),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
         })
-       /*     .overrideProvider(getRepositoryToken(UserEntity))
-            .useValue({
-                getRepository: () => findUser,
-                find: () => findUser,
-                findOne: () => findUser,
-                getOne: () => undefined,
-                save: () => findUser,
-                createQueryBuilder:()=>findUser,
-                where: () => findUser,
-                orWhere: () => findUser,
-                validate: () => undefined,
-
-            })*/
-            // .overrideProvider(UserService)
-            // .useValue(userService)
             .compile();
 
         app = module.createNestApplication();
-
-       // userService = app.get(UserService);
-
         await app.init();
-       /* let userEntity = await getRepository(UserEntity);
-        try {
-            await  userEntity.delete(postUser);
-        } catch (e) {
-            console.log('Упс пут юзера таки и не было');
-        }
-        try {
-            await  userEntity.delete(postUser);
-        } catch (e) {
-            console.log('Упс пост юзера таки и не было');
-        }
-        try {
-            await  userEntity.save(getUser);
-        } catch (e) {
-            console.log('Упс есть уже гетованный товарищщ');
-        }
-        let userFind=await userEntity.createQueryBuilder('user')
-            .where('user.email = :email', { email:getUser.email })
-            .getOne();
-      //  const user = await qb.getOne();.findOne({email:getUser.email,password:getUser.password});
-        if (userFind) {
-            token = jwt.sign({
-                id: userFind.id,
-                username: userFind.name,
-                email: userFind.email,
-            }, process.env.AWT_SECRET);
-        }*/
         });
 
 
@@ -144,9 +77,7 @@ describe('User', () => {
             .send( 'email= '+getUser.email) // x-www-form-urlencoded upload
             .send( 'password= '+getUser.password) // x-www-form-urlencoded upload
             .expect(200)
-          /*  .expect({
-                data: userService.findOne(),
-            })*/;
+            ;
     });
     it(`/PUT user`, () => {
        return  request(app.getHttpServer())
@@ -166,7 +97,6 @@ describe('User', () => {
         return request(app.getHttpServer())
             .get('/user')
             .send( 'email= 34@35.vcbc') // x-www-form-urlencoded upload
-          //  .send( 'password= 34@35.vcbc') // x-www-form-urlencoded upload
             .expect(200,'Not Found');
     });
     it(`/PUT user  no`, () => {
@@ -175,18 +105,14 @@ describe('User', () => {
             .send({ email: '11@1.13',password:'testikTextMessPut',name:'test1' }) // x-www-form-urlencoded upload
             .set('authorization', 'yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJkZmdkZmdmc2RmcyIsImVtYWlsIjoiMzRAMzQudmNiYyIsImlhdCI6MTU3OTc4MTUxNn0.faoJPvnqjet0iTPr8Na3KGZvTCfdXY8F1_wlfUlHCAc')
             .expect(400)
-            /*.expect({
-                data: userService.findAll(),
-            })*/;
+            ;
     });
     it(`/POST user  no`, () => {
         return request(app.getHttpServer())
             .post('/user')
             .send({ password:'test1test1no' }) // x-www-form-urlencoded upload
             .expect(400)
-           /* .expect({
-                data: userService.findAll(),
-            })*/;
+           ;
     });
 
     afterAll(async () => {
