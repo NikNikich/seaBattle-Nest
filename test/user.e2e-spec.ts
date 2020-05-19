@@ -61,7 +61,7 @@ describe('User', () => {
 
     beforeAll(async () => {
         const module = await Test.createTestingModule({
-            imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),TypeOrmModule.forRoot(),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
+            imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
         })
             .compile();
 
