@@ -3,13 +3,23 @@ import { Test } from '@nestjs/testing';
 import { UserModule } from '../src/user/user.module';
 import { UserEntity } from '../src/user/user.entity';
 import { INestApplication } from '@nestjs/common';
-import {TypeOrmModule, getRepositoryToken} from "@nestjs/typeorm";
+import {TypeOrmModule, getRepositoryToken, getCustomRepositoryToken} from "@nestjs/typeorm";
 import {ConfigModule} from "@nestjs/config";
-import {Repository, getRepository, DeleteResult } from "typeorm";
+import {
+    Repository,
+    getRepository,
+    DeleteResult,
+    getCustomRepository,
+    getConnectionOptions,
+    createConnection
+} from "typeorm";
 import {TokenEntity} from "../src/user/token.entity";
 import {GameModule} from "../src/game/game.module";
 import {AppController} from "../src/app.controller";
 import {AppService} from "../src/app.service";
+import {UserController} from "../src/user/user.controller";
+import {UserService} from "../src/user/user.service";
+import {asyncScheduler} from "rxjs";
 const jwt = require('jsonwebtoken');
 
 export const mockRepository = jest.fn(() => ({
@@ -19,9 +29,12 @@ export const mockRepository = jest.fn(() => ({
     },
 }));
 
-describe('User', () => {
+
+describe('User',  () => {
     let token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJkZmdkZmdmc2RmcyIsImVtYWlsIjoiMzRAMzQudmNiYyIsImlhdCI6MTU3OTc4MTUxNn0.faoJPvnqjet0iTPr8Na3KGZvTCfdXY8F1_wlfUlHCAc';
     let app: INestApplication;
+ //   const userEntityRepository = getCustomRepository(UserEntity);
+   // const connection =  () => {return await createConnection(await getConnectionOptions())};
     let findUser = new UserEntity();
     findUser.firstName = 'testF1';
     findUser.lastName = 'testL1';
@@ -60,10 +73,27 @@ describe('User', () => {
   //  let userService: UserService;
 
     beforeAll(async () => {
+        const connection =  await createConnection(await getConnectionOptions());
         const module = await Test.createTestingModule({
-            imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
-        })
-            .compile();
+            controllers: [UserController],
+            providers: [UserService],
+            imports:[TypeOrmModule.forFeature([UserEntity,TokenEntity], {
+                "type": "postgres",
+                "host": "localhost",
+                "port": 5432,
+                "username": "postgres",
+                "password": "postgres",
+                "database": "sea",
+                "synchronize": true,
+                "entities": ["dist/**/*.entity.js"],
+                "cli": {
+                    "migrationsDir": "src/migration"
+                },
+                "migrations": ["src/migration/*.ts"]
+            }),UserModule]
+       //     imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
+          //  providers:[{provide:getRepositoryToken(UserEntity)}
+        }).compile();
 
         app = module.createNestApplication();
         await app.init();
@@ -72,7 +102,7 @@ describe('User', () => {
 
 
     it(`/GET user`, () => {
-        return request(app.getHttpServer())
+           return  request(app.getHttpServer())
             .get('/user')
             .send( 'email= '+getUser.email) // x-www-form-urlencoded upload
             .send( 'password= '+getUser.password) // x-www-form-urlencoded upload
