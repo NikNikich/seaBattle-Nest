@@ -12,7 +12,7 @@ import {TokenEntity} from "./token.entity";
     controllers: [
         UserController
     ],
-    exports: [UserService]
+    exports: [TypeOrmModule.forRoot()]
 })
 export class UserModule implements NestModule {
     public configure(consumer: MiddlewareConsumer) {

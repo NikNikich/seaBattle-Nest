@@ -1,6 +1,14 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getRepository, DeleteResult } from 'typeorm';
+import {getCustomRepositoryToken, InjectRepository} from '@nestjs/typeorm';
+import {
+    Repository,
+    getRepository,
+    DeleteResult,
+    EntityManager,
+    getCustomRepository,
+    getConnection,
+    getConnectionManager, getTreeRepository
+} from 'typeorm';
 import { UserEntity } from './user.entity';
 import {CreateUserDto, LoginUserDto, UpdateUserDto} from './dto';
 import {validate} from "class-validator";
@@ -10,11 +18,14 @@ const jwt = require('jsonwebtoken');
 @Injectable()
 export class UserService {
     constructor(
-        @InjectRepository(UserEntity)
+ /*       @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>,
         @InjectRepository(TokenEntity)
-        private readonly tokenRepository: Repository<TokenEntity>
+        private readonly tokenRepository: Repository<TokenEntity>*/
     ) {}
+   // private readonly connection= getConnectionManager().get();
+    private readonly userRepository= getTreeRepository(UserEntity);
+    private readonly tokenRepository= getTreeRepository(TokenEntity);
 
     async findAll(): Promise<UserEntity[]> {
         return await this.userRepository.find();

@@ -29,6 +29,13 @@ export const mockRepository = jest.fn(() => ({
     },
 }));
 
+export const mockRepository1 = jest.fn(() => ({
+    metadata: {
+        columns: [],
+        relations: [],
+    },
+}));
+
 
 describe('User',  () => {
     let token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJkZmdkZmdmc2RmcyIsImVtYWlsIjoiMzRAMzQudmNiYyIsImlhdCI6MTU3OTc4MTUxNn0.faoJPvnqjet0iTPr8Na3KGZvTCfdXY8F1_wlfUlHCAc';
@@ -76,21 +83,21 @@ describe('User',  () => {
         const connection =  await createConnection(await getConnectionOptions());
         const module = await Test.createTestingModule({
             controllers: [UserController],
-            providers: [UserService],
-            imports:[TypeOrmModule.forFeature([UserEntity,TokenEntity], {
+            providers: [UserService, {provide: getRepositoryToken(UserEntity), useClass: mockRepository }, {provide: getRepositoryToken(TokenEntity), useClass: mockRepository1 }],
+            imports:[/*TypeOrmModule.forFeature([UserEntity,TokenEntity], {
                 "type": "postgres",
                 "host": "localhost",
                 "port": 5432,
                 "username": "postgres",
                 "password": "postgres",
                 "database": "sea",
-                "synchronize": true,
-                "entities": ["dist/**/*.entity.js"],
-                "cli": {
+                "synchronize": true,*/
+                //"entities": ["dist/**/*.entity.js"],
+                /*"cli": {
                     "migrationsDir": "src/migration"
                 },
                 "migrations": ["src/migration/*.ts"]
-            }),UserModule]
+            })*/TypeOrmModule.forRoot(),UserModule]
        //     imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
           //  providers:[{provide:getRepositoryToken(UserEntity)}
         }).compile();
