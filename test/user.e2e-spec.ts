@@ -97,7 +97,8 @@ describe('User',  () => {
                     "migrationsDir": "src/migration"
                 },
                 "migrations": ["src/migration/*.ts"]
-            })*/TypeOrmModule.forRoot(),UserModule]
+            })*/UserModule],
+            exports: [UserService]
        //     imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
           //  providers:[{provide:getRepositoryToken(UserEntity)}
         }).compile();

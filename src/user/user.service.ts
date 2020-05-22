@@ -24,32 +24,37 @@ export class UserService {
         private readonly tokenRepository: Repository<TokenEntity>*/
     ) {}
    // private readonly connection= getConnectionManager().get();
-    private readonly userRepository= getTreeRepository(UserEntity);
-    private readonly tokenRepository= getTreeRepository(TokenEntity);
+   // private readonly userRepository= getRepository(UserEntity);
+   // private readonly tokenRepository= getRepository(TokenEntity);
 
     async findAll(): Promise<UserEntity[]> {
-        return await this.userRepository.find();
+        const userRepository= getRepository(UserEntity);
+        return await userRepository.find();
     }
 
     async findOne(loginUserDto: LoginUserDto) {
+        const userRepository= getRepository(UserEntity);
+        const tokenRepository= getRepository(TokenEntity);
         const findOneOptions = {
             email: loginUserDto.email,
             password:  loginUserDto.password,
         };
-        let userFind=await this.userRepository.findOne(findOneOptions);
+        let userFind=await userRepository.findOne(findOneOptions);
 
         if (userFind) {
             console.log(`findOne ${userFind.id}`);
-            const token = await this.tokenRepository.findOne({user:userFind});
+            const token = await tokenRepository.findOne({user:userFind});
             const {email, firstName, lastName} = userFind;
             return {email, token, firstName, lastName};
         } else return "Not Found";
     }
 
     async create(dto: CreateUserDto):Promise<any>{
+        const userRepository= getRepository(UserEntity);
+        const tokenRepository= getRepository(TokenEntity);
         const {lastName, firstName, email, password, phone} = dto;
         console.log(`const create username ${firstName}  email ${email} password ${password}`);
-        const user = await this.userRepository.findOne({email});
+        const user = await userRepository.findOne({email});
             /*await getRepository(UserEntity)
             .createQueryBuilder('user')
             .where('user.first_name = :firstName', { firstName })
@@ -77,23 +82,25 @@ export class UserService {
 
         } else {
             let newToken = new TokenEntity();
-            const savedUser = await this.userRepository.save(newUser);
+            const savedUser = await userRepository.save(newUser);
             const token = await this.generateJWT(newUser);
-            await this.tokenRepository.save({user:savedUser, accessToken:token });
+            await tokenRepository.save({user:savedUser, accessToken:token });
             return "user Save";
         }
 
     }
 
     async update( dto: UpdateUserDto): Promise<UserEntity> {
-        let toUpdate = await this.userRepository.findOne(dto.id);
+        const userRepository= getRepository(UserEntity);
+        let toUpdate = await userRepository.findOne(dto.id);
 
         let updated = Object.assign(toUpdate, dto);
-        return await this.userRepository.save(updated);
+        return await userRepository.save(updated);
     }
 
     async delete(email: string): Promise<DeleteResult> {
-        return await this.userRepository.delete({ email: email});
+        const userRepository= getRepository(UserEntity);
+        return await userRepository.delete({ email: email});
     }
 
     public generateJWT(user) {
