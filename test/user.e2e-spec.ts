@@ -20,6 +20,7 @@ import {AppService} from "../src/app.service";
 import {UserController} from "../src/user/user.controller";
 import {UserService} from "../src/user/user.service";
 import {asyncScheduler} from "rxjs";
+import {UserRepository} from "../src/user/user.repository";
 const jwt = require('jsonwebtoken');
 
 export const mockRepository = jest.fn(() => ({
@@ -40,7 +41,8 @@ export const mockRepository1 = jest.fn(() => ({
 describe('User',  () => {
     let token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJkZmdkZmdmc2RmcyIsImVtYWlsIjoiMzRAMzQudmNiYyIsImlhdCI6MTU3OTc4MTUxNn0.faoJPvnqjet0iTPr8Na3KGZvTCfdXY8F1_wlfUlHCAc';
     let app: INestApplication;
- //   const userEntityRepository = getCustomRepository(UserEntity);
+    let userRepository: UserRepository = null;
+    //   const userEntityRepository = getCustomRepository(UserEntity);
    // const connection =  () => {return await createConnection(await getConnectionOptions())};
     let findUser = new UserEntity();
     findUser.firstName = 'testF1';
@@ -62,49 +64,48 @@ describe('User',  () => {
     postUser.password='test22test2';
     postUser.lastName='testL2322test2';
     postUser.firstName='testF2322test2';
-     let userService = { findAll: () => ['test'],
-         findOne: () => { return {
-             "id":1,
-             "email": "1@2.ru",
-          //   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiIxQDIucnUiLCJlbWFpbCI6IjFAMi5ydSIsImlhdCI6MTU3OTg2NTc5MH0.UK9ZqBjNkLTrMBqBj2q90zShp1WZtBMKilqb8DQNh-k",
-             "name": "1@2.ru"
-         } },
-        update: () => { return{
-            "id": 3,
-                "name": "nov11",
-                "email": "74741",
-                "password": "nov21"
-        }},
-         create:()=>['User Save']
-     };
-  //  let userService: UserService;
 
     beforeAll(async () => {
         const connection =  await createConnection(await getConnectionOptions());
-        const module = await Test.createTestingModule({
-            controllers: [UserController],
-            providers: [UserService, {provide: getRepositoryToken(UserEntity), useClass: mockRepository }, {provide: getRepositoryToken(TokenEntity), useClass: mockRepository1 }],
-            imports:[/*TypeOrmModule.forFeature([UserEntity,TokenEntity], {
-                "type": "postgres",
-                "host": "localhost",
-                "port": 5432,
-                "username": "postgres",
-                "password": "postgres",
-                "database": "sea",
-                "synchronize": true,*/
+         const module = await Test.createTestingModule({
+             imports: [TypeOrmModule.forRootAsync({
+                 type: "postgres",
+                 host: "localhost",
+                 port: 5432,
+                 username: "postgres",
+                 password: "postgres",
+                 database: "sea",
+                 synchronize: true,
+        }), UserModule]
+      }).compile();
+     app = app = module.createNestApplication();
+     userRepository = app.get<UserRepository>(UserRepository);
+     await userRepository.delete({});
+    // const module = await Test.createTestingModule({
+        // imports: [TypeOrmModule.forRoot(),  UserModule,  ConfigModule.forRoot()],
+     //    providers: [ {provide: getRepositoryToken(UserEntity), useClass: mockRepository }, {provide: getRepositoryToken(TokenEntity), useClass: mockRepository1 }],
+       //  controllers: [UserController],
+        /* imports:[/*TypeOrmModule.forFeature([UserEntity,TokenEntity], {
+             "type": "postgres",
+             "host": "localhost",
+             "port": 5432,
+             "username": "postgres",
+             "password": "postgres",
+             "database": "sea",
+             "synchronize": true,*/
                 //"entities": ["dist/**/*.entity.js"],
                 /*"cli": {
                     "migrationsDir": "src/migration"
                 },
                 "migrations": ["src/migration/*.ts"]
-            })*/UserModule],
-            exports: [UserService]
+           })*/ //UserModule],
+        //    exports: [UserService]
        //     imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
           //  providers:[{provide:getRepositoryToken(UserEntity)}
-        }).compile();
+        //}).compile();
 
-        app = module.createNestApplication();
-        await app.init();
+      //  app = module.createNestApplication();
+       // await app.init();
         });
 
 
