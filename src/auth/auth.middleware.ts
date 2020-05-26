@@ -12,7 +12,7 @@ export class AuthMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     const authHeaders = req.headers.authorization;
-    const SECRET=process.env.AWT_SECRET;
+    const SECRET='secret';
     if (authHeaders ) {
       let decoded;
       try {

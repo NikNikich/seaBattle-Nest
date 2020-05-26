@@ -13,6 +13,7 @@ import { UserEntity } from './user.entity';
 import {CreateUserDto, LoginUserDto, UpdateUserDto} from './dto';
 import {validate} from "class-validator";
 import {TokenEntity} from "./token.entity";
+import {ConfigService} from "@nestjs/config";
 const jwt = require('jsonwebtoken');
 
 @Injectable()
@@ -26,6 +27,7 @@ export class UserService {
    // private readonly connection= getConnectionManager().get();
    // private readonly userRepository= getRepository(UserEntity);
    // private readonly tokenRepository= getRepository(TokenEntity);
+    private readonly secret= 'secret'
 
     async findAll(): Promise<UserEntity[]> {
         const userRepository= getRepository(UserEntity);
@@ -53,7 +55,6 @@ export class UserService {
         const userRepository= getRepository(UserEntity);
         const tokenRepository= getRepository(TokenEntity);
         const {lastName, firstName, email, password, phone} = dto;
-        console.log(`const create username ${firstName}  email ${email} password ${password}`);
         const user = await userRepository.findOne({email});
             /*await getRepository(UserEntity)
             .createQueryBuilder('user')
@@ -73,7 +74,6 @@ export class UserService {
         newUser.email = email;
         newUser.password = password;
         newUser.phone = phone;
-        console.log(newUser);
         const errors = await validate(newUser);
         if (errors.length > 0) {
             console.log(`err1`);
@@ -81,7 +81,7 @@ export class UserService {
             throw new HttpException({message: 'Input data validation failed', _errors}, HttpStatus.BAD_REQUEST);
 
         } else {
-            let newToken = new TokenEntity();
+     //       let newToken = new TokenEntity();
             const savedUser = await userRepository.save(newUser);
             const token = await this.generateJWT(newUser);
             await tokenRepository.save({user:savedUser, accessToken:token });
@@ -91,6 +91,7 @@ export class UserService {
     }
 
     async update( dto: UpdateUserDto): Promise<UserEntity> {
+        console.log(dto);
         const userRepository= getRepository(UserEntity);
         let toUpdate = await userRepository.findOne(dto.id);
 
@@ -107,12 +108,11 @@ export class UserService {
         let today = new Date();
         let exp = new Date(today);
         exp.setDate(today.getDate() + 60);
-
         return jwt.sign({
             id: user.id,
             username: user.firstName,
             email: user.email,
-        }, process.env.AWT_SECRET);
+        }, this.secret);
     };
 
 }

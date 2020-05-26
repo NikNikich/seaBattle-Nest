@@ -21,6 +21,7 @@ import {UserController} from "../src/user/user.controller";
 import {UserService} from "../src/user/user.service";
 import {asyncScheduler} from "rxjs";
 import {UserRepository} from "../src/user/user.repository";
+import {DatabaseModule} from "../src/database/database.module";
 const jwt = require('jsonwebtoken');
 
 export const mockRepository = jest.fn(() => ({
@@ -39,11 +40,9 @@ export const mockRepository1 = jest.fn(() => ({
 
 
 describe('User',  () => {
-    let token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJkZmdkZmdmc2RmcyIsImVtYWlsIjoiMzRAMzQudmNiYyIsImlhdCI6MTU3OTc4MTUxNn0.faoJPvnqjet0iTPr8Na3KGZvTCfdXY8F1_wlfUlHCAc';
+    let token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJOaWsiLCJlbWFpbCI6IjFAMi5ydSIsImlhdCI6MTU4ODI1ODY0Nn0.nzss5OYRO9xHGIvaXYOxFcso21qcrtNiHCfqBMs9Xlg';
     let app: INestApplication;
     let userRepository: UserRepository = null;
-    //   const userEntityRepository = getCustomRepository(UserEntity);
-   // const connection =  () => {return await createConnection(await getConnectionOptions())};
     let findUser = new UserEntity();
     findUser.firstName = 'testF1';
     findUser.lastName = 'testL1';
@@ -61,51 +60,20 @@ describe('User',  () => {
     putUser.lastName='testL122';
     let postUser = new UserEntity();
     postUser.email='test11231@test.test';
-    postUser.password='test22test2';
+    postUser.password='test2test2';
     postUser.lastName='testL2322test2';
     postUser.firstName='testF2322test2';
 
     beforeAll(async () => {
-        const connection =  await createConnection(await getConnectionOptions());
          const module = await Test.createTestingModule({
-             imports: [TypeOrmModule.forRootAsync({
-                 type: "postgres",
-                 host: "localhost",
-                 port: 5432,
-                 username: "postgres",
-                 password: "postgres",
-                 database: "sea",
-                 synchronize: true,
-        }), UserModule]
+             imports: [DatabaseModule, UserModule, UserRepository],
+             controllers: [UserController],
+             providers: [ {provide: getRepositoryToken(UserEntity), useClass: mockRepository }, {provide: getRepositoryToken(TokenEntity), useClass: mockRepository1 }]
       }).compile();
-     app = app = module.createNestApplication();
+     app = module.createNestApplication();
      userRepository = app.get<UserRepository>(UserRepository);
      await userRepository.delete({});
-    // const module = await Test.createTestingModule({
-        // imports: [TypeOrmModule.forRoot(),  UserModule,  ConfigModule.forRoot()],
-     //    providers: [ {provide: getRepositoryToken(UserEntity), useClass: mockRepository }, {provide: getRepositoryToken(TokenEntity), useClass: mockRepository1 }],
-       //  controllers: [UserController],
-        /* imports:[/*TypeOrmModule.forFeature([UserEntity,TokenEntity], {
-             "type": "postgres",
-             "host": "localhost",
-             "port": 5432,
-             "username": "postgres",
-             "password": "postgres",
-             "database": "sea",
-             "synchronize": true,*/
-                //"entities": ["dist/**/*.entity.js"],
-                /*"cli": {
-                    "migrationsDir": "src/migration"
-                },
-                "migrations": ["src/migration/*.ts"]
-           })*/ //UserModule],
-        //    exports: [UserService]
-       //     imports: [TypeOrmModule.forFeature([UserEntity,TokenEntity]),  UserModule, UserEntity, TokenEntity, ConfigModule.forRoot()],
-          //  providers:[{provide:getRepositoryToken(UserEntity)}
-        //}).compile();
-
-      //  app = module.createNestApplication();
-       // await app.init();
+        await app.init();
         });
 
 
@@ -121,7 +89,7 @@ describe('User',  () => {
     it(`/PUT user`, () => {
        return  request(app.getHttpServer())
             .put('/user')
-            .send({ email: putUser.email,password:putUser.password,name:putUser.firstName }) // x-www-form-urlencoded upload
+            .send({ email: putUser.email,password:putUser.password,firstName:putUser.firstName,lastName:putUser.lastName }) // x-www-form-urlencoded upload
             .set('authorization', token)
             .expect(200);
 
@@ -129,7 +97,7 @@ describe('User',  () => {
     it(`/POST user`, () => {
         return request(app.getHttpServer())
             .post('/user')
-            .send( {  email: postUser.email,password:postUser.password,name:postUser.firstName }) // x-www-form-urlencoded upload
+            .send( {  email: postUser.email,password:postUser.password,firstName:postUser.firstName,lastName:putUser.lastName }) // x-www-form-urlencoded upload
             .expect(200);
     });
     it(`/GET user no`, () => {
@@ -141,7 +109,7 @@ describe('User',  () => {
     it(`/PUT user  no`, () => {
         return request(app.getHttpServer())
             .put('/user')
-            .send({ email: '11@1.13',password:'testikTextMessPut',name:'test1' }) // x-www-form-urlencoded upload
+            .send({ email: '11@1.13',password:'testikTextMessPut',firstName:'test1' }) // x-www-form-urlencoded upload
             .set('authorization', 'yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJkZmdkZmdmc2RmcyIsImVtYWlsIjoiMzRAMzQudmNiYyIsImlhdCI6MTU3OTc4MTUxNn0.faoJPvnqjet0iTPr8Na3KGZvTCfdXY8F1_wlfUlHCAc')
             .expect(400)
             ;
