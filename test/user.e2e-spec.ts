@@ -71,8 +71,9 @@ describe('User',  () => {
              providers: [ {provide: getRepositoryToken(UserEntity), useClass: mockRepository }, {provide: getRepositoryToken(TokenEntity), useClass: mockRepository1 }]
       }).compile();
      app = module.createNestApplication();
-     userRepository = app.get<UserRepository>(UserRepository);
-     await userRepository.delete({});
+    // userRepository = app.get<UserRepository>(UserRepository);
+     //   userRepository= null;
+    // await userRepository.delete({});
         await app.init();
         });
 
