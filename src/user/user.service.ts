@@ -101,13 +101,20 @@ export class UserService {
 
     async delete(email: string): Promise<DeleteResult> {
         const userRepository= getRepository(UserEntity);
-        return await userRepository.delete({ email: email});
+        const tokenRepository= getRepository(TokenEntity);
+        const user = await userRepository.findOne({email});
+        console.log(email);
+        if (user){
+            await tokenRepository.delete({user:user});
+            return await userRepository.delete({ email: email});
+        }
+        throw new HttpException({message: 'This user does not exist '}, HttpStatus.BAD_REQUEST);
     }
 
     public generateJWT(user) {
-        let today = new Date();
-        let exp = new Date(today);
-        exp.setDate(today.getDate() + 60);
+        //let today = new Date();
+        //let exp = new Date(today);
+        //exp.setDate(today.getDate() + 60);
         return jwt.sign({
             id: user.id,
             username: user.firstName,

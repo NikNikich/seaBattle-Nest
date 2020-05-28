@@ -1,4 +1,4 @@
-import {Get, Post, Put , HttpCode, Controller, Param, Query, Body} from '@nestjs/common';
+import {Get, Post, Put, HttpCode, Controller, Param, Query, Body, Delete} from '@nestjs/common';
 import {validate} from "class-validator";
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto, LoginUserDto } from './dto';
@@ -25,6 +25,11 @@ export class UserController {
     async update( @Body() userData: UpdateUserDto) {
         console.log(userData);
         return await this.userService.update(userData);
+    }
+    @Delete()
+    async delete(@Body('email') email: string,) {
+        console.log(email);
+        return await this.userService.delete(email);
     }
 
 }

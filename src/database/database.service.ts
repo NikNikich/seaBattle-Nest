@@ -11,18 +11,18 @@ export class DatabaseService implements TypeOrmOptionsFactory {
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
     return {
-     /* type: 'postgres',
+      type: 'postgres',
       host:  'localhost',
       port:  5432,
       username: 'postgres',
       password: 'postgres',
-      database: 'sea',*/
-    //  entities: [`${resolve(__dirname, '..')}/**/*.entity{.ts,.js}`],
-     // migrations: [`${resolve(__dirname)}/migrations/{*.ts,*.js}`],
-    /*  migrationsRun: false,
+      database: 'sea',
+      entities: [`${resolve(__dirname, '..')}/**/*.entity{.ts,.js}`],
+      migrations: [`${resolve(__dirname)}/migrations/{*.ts,*.js}`],
+      migrationsRun: false,
       logging:  'all',
       cli: {migrationsDir: './migrations'},
-      synchronize: false*/
+      synchronize: false
     };
   }
 }

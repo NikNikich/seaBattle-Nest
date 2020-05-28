@@ -71,7 +71,7 @@ describe('User',  () => {
              providers: [ {provide: getRepositoryToken(UserEntity), useClass: mockRepository }, {provide: getRepositoryToken(TokenEntity), useClass: mockRepository1 }]
       }).compile();
      app = module.createNestApplication();
-    // userRepository = app.get<UserRepository>(UserRepository);
+     userRepository = app.get<UserRepository>(UserRepository);
      //   userRepository= null;
     // await userRepository.delete({});
         await app.init();
@@ -79,6 +79,12 @@ describe('User',  () => {
 
 
 
+    it(`/DELETE user`, () => {
+        return  request(app.getHttpServer())
+            .delete('/user')
+            .send( {email:postUser.email}) // x-www-form-urlencoded upload
+            ;
+    });
     it(`/GET user`, () => {
            return  request(app.getHttpServer())
             .get('/user')
