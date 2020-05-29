@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
-import { UserService } from './user.service';
+//import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto, LoginUserDto } from './dto';
 import {TypeOrmModule} from "@nestjs/typeorm";
 import {UserEntity} from "./user.entity";
 import {TokenEntity} from "./token.entity";
-/*class UserService {
+class UserService {
     constructor(
         private readonly userRepository: any
     ) {}
@@ -19,7 +19,7 @@ import {TokenEntity} from "./token.entity";
     async update(dto: UpdateUserDto){
         return 'test';
     }
-}*/
+}
 describe('UserController', () => {
     let userController: UserController;
     let userService: UserService;
@@ -28,7 +28,6 @@ describe('UserController', () => {
     const result = 'test';
     beforeEach(async () => {
         const app: TestingModule = await Test.createTestingModule({
-            imports: [TypeOrmModule.forFeature([UserEntity, TokenEntity])],
             controllers: [UserController],
             providers: [UserService],
         }).compile();
@@ -40,18 +39,18 @@ describe('UserController', () => {
 
     describe('root', () => {
         it('create return "test"', async () => {
-            console.log('1');
+            console.log(userService);
             const testProm = () => new Promise((resolve, reject) => result);
             let  data= await userService.create(createUserDto);
             expect(data).toBe(result);
         });
-        /*it('update return "test"', async () => {
+        it('update return "test"', async () => {
             let  data= await userController.update(updateUserDto);
             expect(data).toBe(result);
         });
         it('findOne return "test"', async () => {
             let  data= await userController.findOne('test@1.ru','pass1');
             expect(data).toBe(result);
-        });*/
+        });
     });
 });
