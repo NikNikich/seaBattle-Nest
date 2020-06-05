@@ -44,6 +44,13 @@ export class GameEntity {
     })
    start:boolean;
 
+    @Column({
+        default:null,
+        nullable: true
+    })
+    level:number;
+
+
     @ManyToOne(type => UserEntity,{  eager: true, cascade:true})
     @JoinColumn({ name: "walking", })
     walking: UserEntity;

@@ -12,6 +12,8 @@ import {validate} from "class-validator";
 import {FieldEntity} from "../field/field.entity";
 import {FieldShipEntity} from "../field/fieldShip.entity";
 import {UserGameEntity} from "./userGame.entity";
+import {NUMBER_FIELD} from "../shared/enumGame";
+import {COMPUTER_USER, LONG_FIELD} from "../shared/constGame";
 
 @Injectable()
 export class GameService {
@@ -28,10 +30,10 @@ export class GameService {
         private readonly userGameRepository: Repository<UserGameEntity>,
     ) {
     }
-    private readonly longField = 10;
-    private readonly compUserId = 4;
-    private readonly bangShip =8;
-    private readonly shutPast =9;
+    private readonly longField = LONG_FIELD;
+    private readonly compUserId = COMPUTER_USER;
+    private readonly bangShip =NUMBER_FIELD.bangShip;
+    private readonly shutPast =NUMBER_FIELD.shutPast;
 
 
     async findAll(userId: number) {
@@ -130,10 +132,12 @@ export class GameService {
     async create(gameData: CreateGameDto, userId: number) {
         const user1 = await this.userRepository.findOne(userId);
         let user2 = null;
+        let newGame:{[k: string]: any}={user1: user1, user2: user2};
         if (gameData.user) {
             user2 = await this.userRepository.findOne(this.compUserId);
+            newGame.level=0;
         }
-        const game = await this.gameRepository.save({user1: user1, user2: user2});
+        const game = await this.gameRepository.save(newGame);
         const gameField = await this.fieldRepository.save({content:"", length: this.longField});
         const hisField = await this.fieldRepository.save({content:"", length: this.longField});
         await this.userGameRepository.save({gameField, hisField, user:user1, game});
